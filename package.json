@@ -1,0 +1,10 @@
+{
+  "name": "jd-fpzz",
+  "version": "1.0.0",
+  "main": "download.js",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer-core": "^2.0.0",
+    "query-string": "^6.9.0"
+  }
+}
