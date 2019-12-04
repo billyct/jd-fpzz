@@ -69,7 +69,7 @@ const sleep = ms =>  new Promise(resolve => setTimeout(resolve,ms));
     await sleep(3000);
 
     // 还有下一页的话
-    if (page.$('.ui-pager-next') !== null) {
+    if (await page.$('.ui-pager-next') !== null) {
       await page.click('.ui-pager-next');
       await downloadOnePage()
     }
