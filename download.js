@@ -10,7 +10,7 @@ const config = require('./config');
  * @param int ms
  * @returns {Promise<any>}
  */
-const sleep = ms =>  new Promise(resolve => setTimeout(resolve,ms));
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -39,10 +39,12 @@ const sleep = ms =>  new Promise(resolve => setTimeout(resolve,ms));
       if (text === '发票详情') {
         // 如果是发票详情就访问并且下载发票至 dist 目录
         const url = await linkEl.evaluate(el => el.href)
-        if (url.indexOf('zzxq.action') > 0) {
+        if (url.indexOf('orderId') > 0) {
           // 通过当前链接 的 orderId 来命名文件名称
-          const {query} = queryString.parseUrl(url);
-          const filename = path.resolve(__dirname, `dist/${query.orderId}.pdf`);
+          const { query } = queryString.parseUrl(url);
+          console.log('downloading invoice from', url)
+          const invoicePath = `dist/${query.orderId}.pdf`
+          const filename = path.resolve(__dirname, invoicePath);
           if (fs.existsSync(filename)) {
             // 如果文件已经存在，就不需要重复下载
             continue;
@@ -50,16 +52,21 @@ const sleep = ms =>  new Promise(resolve => setTimeout(resolve,ms));
 
           const popupPage = await browser.newPage()
           await popupPage.goto(url)
-          await popupPage.waitForSelector('.download-trigger')
-          // 获取发票的下载链接
-          const href = await popupPage.$eval('.download-trigger', el => el.href)
+          try {
+            await popupPage.waitForSelector('.download-trigger', {timeout: 1000})
+            const href = await popupPage.$eval('.download-trigger', el => el.href)
 
-          // 开始下载
-          const file = fs.createWriteStream(filename);
-          https.get(href, response => {
-            response.pipe(file);
-            file.on('finish', () => file.close());
-          });
+            // 获取发票的下载链接
+            const file = fs.createWriteStream(filename);
+
+            // 开始下载
+            https.get(href, response => {
+              response.pipe(file);
+              file.on('finish', () => file.close());
+            });
+          } catch (e) {
+            console.log('failed to download invoice', e)
+          }
 
           await popupPage.close();
         }
